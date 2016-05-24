@@ -9,6 +9,7 @@ static void print_str_t(char *fmt,char *start,int len){
                 printf(fmt,tmp);
         }
 }
+#if 0
 int request_decode(int fd,char *request,http_request_line_t *request_line){
 	char method[10];
 	char *tmp;
@@ -89,3 +90,4 @@ int get_protocol(char *p){
 		protocol=HTTP_VERSION_09;
 	return protocol;
 }
+#endif
