@@ -1,0 +1,4 @@
+cflag=-I ./ `xml2-config --cflags`
+lib=-L ./ `xml2-config --libs`
+a.out:config.c log.c
+	gcc $^ -Wall -g -D CONFIG_DEBUG $(cflag) $(lib)
