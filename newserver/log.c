@@ -6,17 +6,33 @@
 #include "config.h"
 #define LOGFILE "/var/log/server.log"
 extern int log_to;
-void mylog(char *fmt,...){
+log_t *dlog = NULL;
+enum tagLogLevel
+{
+    LOG_LEVEL_DEBUG = 0,
+    LOG_LEVEL_INFO,
+    LOG_LEVEL_WARN,
+    LOG_LEVEL_ERR,
+    LOG_LEVEL_MAX,
+};
+char uclogLevel[LOG_LEVEL_MAX] = 
+{
+    "DEBUG",
+    "INFO",
+    "WARN",
+    "ERR",
+};
+void mylog(unsigned int level, char *fmt,...){
 	//FILE *fn;
+	unsigned char logstr[1024] = {0};
 	va_list var;
-	pthread_mutex_lock(&(dlog->log_lock));
-		va_start(var,fmt);
-		if(!dlog->log){
-			printf("log fd is null\n");
-		}
-		vfprintf(dlog->log,fmt,var);
-		va_end(var);	
-		//fclose(log->log);
+	sprintf(logstr,"%s %s %5s (%s:%d) %s:%s",__DATE__,__TIME__,uclogLevel[level],__FILE__,__LINE__,__FUNCTION__);
+	va_start(var,fmt);
+	sprintf(logstr,fmt,var);
+	va_end(var);
+    pthread_mutex_lock(&(dlog->log_lock));
+		if (dlog->log)
+			vfprintf(dlog->log,logstr);
 	pthread_mutex_unlock(&(dlog->log_lock));
 }
 log_t* init_log(struct server_conf *srv){
@@ -78,9 +94,6 @@ void fini_log(log_t *log){
 }
 #ifdef LOG_DEBUG
 int main(){
-	error_log("this is a test");
-	warn_log("this is a test");
-	info_log("this is a test");
-	debug_log("this is a test");
+	log_debug(LOG_LEVEL_DEBUG,"%s","test log\n");
 }
 #endif

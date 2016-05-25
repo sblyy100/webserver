@@ -21,7 +21,9 @@
 #define MODE (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)
 extern int errno;
 extern int log_to=LOG_2_FILE;
-int isdaemon;
+extern log_t *dlog;
+
+int isdaemon = 0;
 static void sigint_handler(int sig){
 	fini_log(dlog);
 	shut_down();
@@ -88,7 +90,6 @@ main(int argc,char **argv){
 	//extern struct server_conf  srv;
 	/*sig init*/
 	signal(SIGINT,sigint_handler);
-	isdaemon=1;
 	parse_arg(argc,argv);
 	if(isdaemon)
 		mydaemon();
