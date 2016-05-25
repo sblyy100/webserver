@@ -25,11 +25,9 @@ static int set_nonblock(int fd){
     return 0;
 }
 void shut_down(void){
-    warn_log("exit...");
     exit(1);
 }
 void work_clean(){
-    warn_log("work thread exit...");
 }
 void work_thread(struct server_conf *srv){
     char logstr[1024];
@@ -65,7 +63,6 @@ void work_thread(struct server_conf *srv){
 		newfd=con_pop(connections);
 		if(newfd<0){
 			sprintf(logstr,"newfd error,%d",newfd);
-			warn_log(logstr);
 			continue;
 		}
 		set_nonblock(newfd);
