@@ -12,6 +12,16 @@ typedef struct {
 	FILE *log;
 }log_t;
 
+enum tagLogLevel
+{
+    LOG_LEVEL_DEBUG = 0,
+    LOG_LEVEL_INFO,
+    LOG_LEVEL_WARN,
+    LOG_LEVEL_ERR,
+    LOG_LEVEL_MAX,
+};
+
+
 #define log_debug(level, fmt,args...) mylog(level,fmt,##args)
 
 void mylog(unsigned int level, char *fmt,...);

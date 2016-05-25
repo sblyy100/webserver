@@ -27,7 +27,7 @@ static char *http_response_readfile(char *path){
     int n,i=0;
     fd=open(path,O_RDONLY);
     if(fd<0){
-		error_log("open request file error!");
+		log_debug(LOG_LEVEL_DEBUG,"open request file error!");
 		//perror("open failed");
 		close(fd);
 		return NULL;
@@ -150,7 +150,7 @@ int http_response_create(struct server_conf *server,http_request_line_t *request
 			return 1;
                 }//endif
 		else{
-			error_log("open for document root dir failed!");
+			log_debug(LOG_LEVEL_DEBUG,"open for document root dir failed!");
 			http_response_send_error(request->fd,500,desc_500,content_500);
 			return(-1);
 
@@ -205,7 +205,7 @@ int http_response_add_headers(http_response_t *response,char *header){
         log_debug(LOG_LEVEL_DEBUG,"add header ok!");
         return 1;
     }
-    error_log("add header failed!");
+    log_debug(LOG_LEVEL_DEBUG,"add header failed!");
     return -1;
 }
 int http_response_add_body(http_response_t *response,char *body){
@@ -216,7 +216,7 @@ int http_response_add_body(http_response_t *response,char *body){
             log_debug(LOG_LEVEL_DEBUG,"add response body ok");    
             return 1;
         }
-        error_log("add response body error!");
+        log_debug(LOG_LEVEL_DEBUG,"add response body error!");
         return -1;
 }
 int free_response(http_response_t *response){

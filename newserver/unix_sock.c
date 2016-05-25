@@ -9,25 +9,25 @@ int recv_process(char *path,callback f,void *parm){
         int sock,newsock;
 	char buf[1024];
         if((sock=socket(AF_UNIX,SOCK_STREAM,0))<0){
-                error_log("create UNIX SOCK error");
+                log_debug(LOG_LEVEL_DEBUG,"create UNIX SOCK error");
                 exit(-1);
         }
         ser_addr.sun_family=AF_UNIX;
         strcpy(ser_addr.sun_path,path);
         unlink(path);
         if(bind(sock,(struct sockaddr*)&ser_addr,(sizeof(ser_addr.sun_family)+strlen(ser_addr.sun_path)))<0){
-                error_log("bind UNIX SOCK error");
+                log_debug(LOG_LEVEL_DEBUG,"bind UNIX SOCK error");
                 exit(-1);
         }
         if(listen(sock,5)<0){
-                error_log("listen UNIX SOCK error");
+                log_debug(LOG_LEVEL_DEBUG,"listen UNIX SOCK error");
                 exit(-1);
         }
 
         while(1){
 
                 if((newsock=accept(sock,NULL,NULL))<0){
-                        warn_log("accept unix sock error");
+                    log_debug(LOG_LEVEL_DEBUG,"accept unix sock error");
 			continue;
                 }
 
@@ -45,13 +45,13 @@ int connect_process(char *path){
         struct sockaddr_un cli_addr;
 
         if((sock=socket(AF_UNIX,SOCK_STREAM,0))<0){
-                error_log("unix sock client create socket error");
+                log_debug(LOG_LEVEL_DEBUG,"unix sock client create socket error");
                 return -1;
         }
         cli_addr.sun_family=AF_UNIX;
         strcpy(cli_addr.sun_path,path);//unsafe
         if(connect(sock,(struct sockaddr*)&cli_addr,(sizeof(cli_addr.sun_family)+strlen(cli_addr.sun_path)))<0){
-                 error_log("unix sock client connect to error");
+                 log_debug(LOG_LEVEL_DEBUG,"unix sock client connect to error");
                  return -1;
         }
 	return sock;

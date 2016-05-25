@@ -99,7 +99,7 @@ main(int argc,char **argv){
 	dlog=init_log(&srv);
 	perror("init log ok");
 	if(pthread_create(&config_tid,NULL,recv_cmd_loop,NULL)<0){
-		error_log("create config thread error");
+		log_debug(LOG_LEVEL_DEBUG,"create config thread error");
 		//exit(-1);
 	}
 	log_debug(LOG_LEVEL_DEBUG,"create config thread sucessful");

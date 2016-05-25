@@ -7,14 +7,7 @@
 #define LOGFILE "/var/log/server.log"
 int log_to;
 log_t *dlog = NULL;
-enum tagLogLevel
-{
-    LOG_LEVEL_DEBUG = 0,
-    LOG_LEVEL_INFO,
-    LOG_LEVEL_WARN,
-    LOG_LEVEL_ERR,
-    LOG_LEVEL_MAX,
-};
+
 char uclogLevel[LOG_LEVEL_MAX][128] = 
 {
     "DEBUG",

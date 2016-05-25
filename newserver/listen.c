@@ -19,7 +19,7 @@ int listen_thread(struct server_conf *srv){
 	log_debug(LOG_LEVEL_DEBUG, "listen thread create %u",pthread_self());
 	connections=(struct con_stack*)malloc(sizeof(struct con_stack));
 	if(!connections){
-		error_log("malloc for connection stack error");
+		log_debug(LOG_LEVEL_DEBUG,"malloc for connection stack error");
 		exit(-1);
 	}
 	log_debug(LOG_LEVEL_DEBUG, "malloc for connection stack OK");
@@ -35,16 +35,16 @@ int listen_thread(struct server_conf *srv){
    	memset(server.sin_zero,0,8);
 
 	if((sock=socket(AF_INET,SOCK_STREAM,0))<0){
-		error_log("create sock failed");
+		log_debug(LOG_LEVEL_DEBUG,"create sock failed");
 		exit(-1);
 	}
 	log_debug(LOG_LEVEL_DEBUG, "create sock sucessful");
 	//listen_sock=sock;
 	if(bind(sock,(struct sockaddr*)&server,sizeof(server))<0){
-		error_log("bind sock error");
+		log_debug(LOG_LEVEL_DEBUG,"bind sock error");
 		exit(-1);
 	}
-	log_debug("bind sock sucessful");
+	log_debug(LOG_LEVEL_DEBUG,"bind sock sucessful");
 	if(!srv->maxfds){
 		listen(sock,10);
 		

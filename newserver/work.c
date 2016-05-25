@@ -42,12 +42,12 @@ void work_thread(struct server_conf *srv){
     //pthread_cleanup_push(&work_clean,NULL);
     events=(struct epoll_event*)malloc(MAX_CON*sizeof(struct epoll_event));
     if(!events){
-        error_log("events malloc failed");
+        log_debug(LOG_LEVEL_DEBUG,"events malloc failed");
         exit(-1);
     }
     epfd=epoll_create(256);
     if(-1==epfd){
-        error_log("events malloc failed");
+        log_debug(LOG_LEVEL_DEBUG,"events malloc failed");
         exit(-1);
     }
 	while(1){
@@ -103,7 +103,7 @@ int process_events(int epfd,struct epoll_event* events,struct server_conf *srv){
 		log_debug(LOG_LEVEL_DEBUG,"malloc for request buffer ok!");
 		request_line=(http_request_line_t*)calloc(1,sizeof(http_request_line_t));
 		if(!request_line){
-			error_log("malloc for request decode buf error");
+			log_debug(LOG_LEVEL_DEBUG,"malloc for request decode buf error");
 			goto end;
 		}
 		log_debug(LOG_LEVEL_DEBUG,"malloc for request line buffer ok");

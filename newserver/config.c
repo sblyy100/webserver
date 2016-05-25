@@ -38,7 +38,7 @@ char *read_conf(char *key){
 	xmlNodePtr root,cur;
 	xmlChar *content;
 	if(!(doc=xmlParseFile(configfile))){
-	//error_log("open config error");
+	log_debug(LOG_LEVEL_DEBUG, "open config error");
 	exit(-1);
 	}
 	if(xmlKeepBlanksDefault(0)){
@@ -47,10 +47,10 @@ char *read_conf(char *key){
 	}
 	root=xmlDocGetRootElement(doc);
 	if(!root)
-		//error_log("server xml is empty!");
+		log_debug(LOG_LEVEL_DEBUG,"server xml is empty!");
 		printf("server xml is empty!\n");
 	if(xmlStrcmp(root->name,BAD_CAST"server")!=0){
-		//error_log("xml parser failed,root element is not server");
+		log_debug(LOG_LEVEL_DEBUG,"xml parser failed,root element is not server");
 		printf("xml parser failed,root element is not server\n");
 		exit(-1);
 	}
@@ -58,7 +58,7 @@ char *read_conf(char *key){
 	while(cur){
 		if(xmlStrcmp(cur->name,BAD_CAST(key))==0){
 			if(!(content=(xmlChar *)malloc(128*sizeof(char))))//free when exit
-				//error_log("xml content malloc error!");
+				log_debug(LOG_LEVEL_DEBUG,"xml content malloc error!");
 				printf("xml content malloc error!\n");
 			strcpy(content,xmlNodeGetContent(cur));
 			xmlFreeDoc(doc);
@@ -71,7 +71,7 @@ char *read_conf(char *key){
 }
 static void do_cmd(char *cmd){
 	if(!strcmp(cmd,"stop")){
-	    log_debug("receive a stop cmd!");
+	    log_debug(LOG_LEVEL_DEBUG, "receive a stop cmd!");
 		;
 	}
 	else if(!strcmp(cmd,"restart")){
