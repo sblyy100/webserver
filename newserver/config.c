@@ -71,15 +71,15 @@ char *read_conf(char *key){
 }
 static void do_cmd(char *cmd){
 	if(!strcmp(cmd,"stop")){
-	    debug_log("receive a stop cmd!");
+	    log_debug("receive a stop cmd!");
 		;
 	}
 	else if(!strcmp(cmd,"restart")){
-		debug_log("receive a restart cmd!");
+		log_debug(LOG_LEVEL_DEBUG,"receive a restart cmd!");
 	    ;
 	}
 	else
-	    debug_log("receive unknow cmd!");
+	    log_debug(LOG_LEVEL_DEBUG, "receive unknow cmd!");
 }
 
 void recv_cmd_loop(){

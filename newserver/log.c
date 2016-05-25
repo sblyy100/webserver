@@ -5,7 +5,7 @@
 #include <stdarg.h>
 #include "config.h"
 #define LOGFILE "/var/log/server.log"
-extern int log_to;
+int log_to;
 log_t *dlog = NULL;
 enum tagLogLevel
 {
@@ -15,14 +15,15 @@ enum tagLogLevel
     LOG_LEVEL_ERR,
     LOG_LEVEL_MAX,
 };
-char uclogLevel[LOG_LEVEL_MAX] = 
+char uclogLevel[LOG_LEVEL_MAX][128] = 
 {
     "DEBUG",
     "INFO",
     "WARN",
     "ERR",
 };
-void mylog(unsigned int level, char *fmt,...){
+void mylog(unsigned int level, char *fmt,...)
+{
 	//FILE *fn;
 	unsigned char logstr[1024] = {0};
 	va_list var;
@@ -32,7 +33,7 @@ void mylog(unsigned int level, char *fmt,...){
 	va_end(var);
     pthread_mutex_lock(&(dlog->log_lock));
 		if (dlog->log)
-			vfprintf(dlog->log,logstr);
+			fprintf(dlog->log,logstr);
 	pthread_mutex_unlock(&(dlog->log_lock));
 }
 log_t* init_log(struct server_conf *srv){
@@ -94,6 +95,11 @@ void fini_log(log_t *log){
 }
 #ifdef LOG_DEBUG
 int main(){
+    init_conf(&srv);
+    perror("init server ok");
+    dlog=init_log(&srv);
+
 	log_debug(LOG_LEVEL_DEBUG,"%s","test log\n");
+    fini_log(dlog);
 }
 #endif

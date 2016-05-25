@@ -4,7 +4,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include "config.h"
-extern int log_to;//
+
 #define LOG_2_FILE 0
 #define LOG_2_STDERR 1
 typedef struct {
@@ -12,10 +12,12 @@ typedef struct {
 	FILE *log;
 }log_t;
 
-void mylog(char *fmt,...);
+#define log_debug(level, fmt,args...) mylog(level,fmt,##args)
+
+void mylog(unsigned int level, char *fmt,...);
 log_t* init_log(struct server_conf *);
 void fini_log(log_t *);
 
-#define log_debug(level, fmt,args...) mylog(level,fmt,##args)
+
 
 #endif

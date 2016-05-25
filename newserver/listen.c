@@ -16,14 +16,13 @@ int listen_thread(struct server_conf *srv){
 	char logstr[1024];
 	server.sin_family=AF_INET;    ///init server addr
 	//struct con_stack *connections;
-	sprintf(logstr,"listen thread create %u",pthread_self());
-	debug_log(logstr);
+	log_debug(LOG_LEVEL_DEBUG, "listen thread create %u",pthread_self());
 	connections=(struct con_stack*)malloc(sizeof(struct con_stack));
 	if(!connections){
 		error_log("malloc for connection stack error");
 		exit(-1);
 	}
-	debug_log("malloc for connection stack OK");
+	log_debug(LOG_LEVEL_DEBUG, "malloc for connection stack OK");
 	stack_init(connections);
 	if(!srv->ip)
     		server.sin_addr.s_addr=htonl(INADDR_ANY);
@@ -39,35 +38,34 @@ int listen_thread(struct server_conf *srv){
 		error_log("create sock failed");
 		exit(-1);
 	}
-	debug_log("create sock sucessful");
+	log_debug(LOG_LEVEL_DEBUG, "create sock sucessful");
 	//listen_sock=sock;
 	if(bind(sock,(struct sockaddr*)&server,sizeof(server))<0){
 		error_log("bind sock error");
 		exit(-1);
 	}
-	debug_log("bind sock sucessful");
+	log_debug("bind sock sucessful");
 	if(!srv->maxfds){
 		listen(sock,10);
-		error_log("read server config maxfds error,listen 10");
+		
 	}
 	else{
 		listen(sock,srv->maxfds);
-		debug_log("listen sucessful");
+		log_debug(LOG_LEVEL_DEBUG, "listen sucessful");
 	}
 	while(1){
 		if((int)(connections->top)>128){
 			//printf("top is %d\n",connections->top);
-			warn_log("listen stack > 128,sleep 1s");
+			log_debug(LOG_LEVEL_DEBUG, "listen stack > 128,sleep 1s");
 			sleep(1);
 			continue;
 		}
 		if((newsock=accept(sock,(struct sockaddr*)&client,&client_len))<0){
-			sprintf(logstr,"accept error,accept sock %d",newsock);
-			warn_log(logstr);
+			log_debug(LOG_LEVEL_DEBUG, "accept error,accept sock %d",newsock);
 			continue;
 		}
-		sprintf(logstr,"accept OK,accept sock %d",newsock);
-		warn_log(logstr);
+		log_debug(LOG_LEVEL_DEBUG,"accept OK,accept sock %d",newsock);
+		
 		con_push(connections,newsock);
 
 	}

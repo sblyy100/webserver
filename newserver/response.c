@@ -32,19 +32,19 @@ static char *http_response_readfile(char *path){
 		close(fd);
 		return NULL;
     }
-    debug_log("open request file ok");
+    log_debug(LOG_LEVEL_DEBUG,"open request file ok");
 	do{
 		//printf("(%s.%d)relloc start\n",__FILE__,__LINE__);
 		buf=(char *)realloc(buf,(BUFF_SIZE+(i*BUFF_SIZE))*sizeof(char));
 		//printf("(%s.%d)relloc end\n",__FILE__,__LINE__);
 		if(!buf){
-			debug_log("realloc for buf failed!");
+			log_debug(LOG_LEVEL_DEBUG,"realloc for buf failed!");
 			close(fd);
 			return NULL;
 		}
 		n=read(fd,buf+i*BUFF_SIZE,BUFF_SIZE);
 		if(n<BUFF_SIZE){
-			debug_log("read file end");
+			log_debug(LOG_LEVEL_DEBUG,"read file end");
 			close(fd);
 			//printf("(%s.%d)read end,0x%x",__FILE__,__LINE__,buf);
 			return buf;
@@ -62,20 +62,20 @@ static char *http_response_ls(char *server_root){
 
         struct dirent *dirinfo;
 	char logstr[1024];
-	sprintf(logstr,"enter response ls dir process,root dir is :%s",server_root);
-	debug_log(logstr);
+	log_debug(LOG_LEVEL_DEBUG,"enter response ls dir process,root dir is :%s",server_root);
+
 	//printf("server root dir is :%s\n",server_root);
         if(server_root)
 		root=opendir(server_root);
         if(!root){
 	//perror("open error!");
-		sprintf(logstr,"open root dir failed,error: %s",strerror(errno));
-            error_log(logstr);
+		log_debug(LOG_LEVEL_DEBUG,"open root dir failed,error: %s",strerror(errno));
+          
             //closedir(root);
             return NULL;
         }
         else{
-		debug_log("open root dir ok");
+		log_debug(LOG_LEVEL_DEBUG,"open root dir ok");
                 buf=(char *)malloc(BUFF_SIZE*sizeof(char));
                 if(buf){
                         memset(buf,0,BUFF_SIZE);
@@ -87,7 +87,7 @@ static char *http_response_ls(char *server_root){
                         return buf;
                 }
                 else
-                    error_log("response ls buffer is NULL!");
+                    log_debug(LOG_LEVEL_DEBUG,"response ls buffer is NULL!");
             		closedir(root);
                     return NULL;
         }
@@ -165,7 +165,7 @@ int http_response_create(struct server_conf *server,http_request_line_t *request
 		if(!content){
 		//404
 		    http_response_send_error(request->fd,404,desc_404,content_404);
-		    debug_log("send not found!");
+		    log_debug(LOG_LEVEL_DEBUG,"send not found!");
 		    return 1;
 		}
 		//printf("content is 0x%x\n",content);
@@ -190,11 +190,11 @@ int http_response_add_status_line(http_response_t *response,int status_code,char
         char buf[BUFF_SIZE];
         sprintf(buf,"%s %d %s\r\n",HTTP_11_STR,status_code,status_line);
         if(http_response_realloc_for_buf(response,buf)>0){
-            debug_log("add response line ok!");
+            log_debug(LOG_LEVEL_DEBUG,"add response line ok!");
             return 1;
         }
         else{
-            error_log("add response line error!");
+            log_debug(LOG_LEVEL_DEBUG,"add response line error!");
             return -1;
         }
 }
@@ -202,7 +202,7 @@ int http_response_add_headers(http_response_t *response,char *header){
     char buf[BUFF_SIZE];
     sprintf(buf,"%s\r\n",header);
     if(http_response_realloc_for_buf(response,buf)>0){
-        debug_log("add header ok!");
+        log_debug(LOG_LEVEL_DEBUG,"add header ok!");
         return 1;
     }
     error_log("add header failed!");
@@ -213,7 +213,7 @@ int http_response_add_body(http_response_t *response,char *body){
         http_response_realloc_for_buf(response,"\r\n");
         if(http_response_realloc_for_buf(response,body)>0){
 		//printf("add response body ok!%s,%d\n",__FILE__,__LINE__);
-            debug_log("add response body ok");    
+            log_debug(LOG_LEVEL_DEBUG,"add response body ok");    
             return 1;
         }
         error_log("add response body error!");
@@ -226,5 +226,5 @@ int free_response(http_response_t *response){
         //printf("(%s.%d)end free response\n",__FILE__,__LINE__);
         response->data=NULL;
 	response->len=0;
-        debug_log("free response buffer!");
+        log_debug(LOG_LEVEL_DEBUG,"free response buffer!");
 }

@@ -27,7 +27,7 @@ int con_pop(struct con_stack *S){
 	if(S->top>-1){
 		pthread_mutex_lock(&(S->stack_lock));
 		ret=S->con[S->top--];
-		debug_log("pop a socket");
+		log_debug(LOG_LEVEL_DEBUG,"pop a socket");
 		pthread_mutex_unlock(&(S->stack_lock));
 		return ret;
 	}
@@ -38,8 +38,7 @@ int con_push(struct con_stack *S,int fd){
 	if(S->top<MAX_CON){
 		pthread_mutex_lock(&(S->stack_lock));
 		S->con[++S->top]=fd;
-		debug_log("push a socket");
-		sprintf(logstr,"current connection top is %d",S->top);
+		log_debug(LOG_LEVEL_DEBUG,"current connection top is %d",S->top);
 		pthread_mutex_unlock(&(S->stack_lock));
 		return 1;
 	}

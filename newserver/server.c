@@ -20,7 +20,7 @@
 #define WORK_THREAD_NUM 2
 #define MODE (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)
 extern int errno;
-extern int log_to=LOG_2_FILE;
+extern int log_to;
 extern log_t *dlog;
 
 int isdaemon = 0;
@@ -102,7 +102,7 @@ main(int argc,char **argv){
 		error_log("create config thread error");
 		//exit(-1);
 	}
-	debug_log("create config thread sucessful");
+	log_debug(LOG_LEVEL_DEBUG,"create config thread sucessful");
 	/*main thread*/
 	/*parent process:watch*/
 	while(isdaemon&&(!child)){

@@ -14,11 +14,11 @@ int request_decode(int fd,char *request,http_request_line_t *request_line){
 	char method[10];
 	char *tmp;
 	if(!request){
-		debug_log("request buf is null");
+		log_debug(LOG_LEVEL_DEBUG, "request buf is null");
 		return NULL;
 	}
 	if(!request_line){
-		debug_log("request line buf is null");
+		log_debug(LOG_LEVEL_DEBUG, "request line buf is null");
 		return NULL;
 	}
         request_line->fd=fd;
