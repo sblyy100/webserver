@@ -5,12 +5,12 @@
 #include "config.h"
 #include "log.h"
 #include "unix_sock.h"
-void init_conf(struct server_conf *server){
+UINT32 init_conf(struct server_conf *server){
 	//init_conf(&server)
 	char *tmp;
 	if(!server){
-		puts("server conf is null");
-		exit(-1);
+        log_debug(LOG_LEVEL_DEBUG,"server conf is null");
+		return ERR;
 	}
 	server->ip=read_conf("ip");
 	tmp=read_conf("port");
@@ -21,6 +21,7 @@ void init_conf(struct server_conf *server){
 	tmp=read_conf("maxfds");
 	server->maxfds=atoi(tmp);
 	free(tmp);
+    return OK;
 	
 }
 void destory_conf(struct server_conf *server){
@@ -42,16 +43,13 @@ char *read_conf(char *key){
 	exit(-1);
 	}
 	if(xmlKeepBlanksDefault(0)){
-		//debug_log("remove xml blank failed");
-		printf("remove xml blank failed\n");
+		log_debug(LOG_LEVEL_DEBUG, "remove xml blank failed\n");
 	}
 	root=xmlDocGetRootElement(doc);
 	if(!root)
 		log_debug(LOG_LEVEL_DEBUG,"server xml is empty!");
-		printf("server xml is empty!\n");
 	if(xmlStrcmp(root->name,BAD_CAST"server")!=0){
 		log_debug(LOG_LEVEL_DEBUG,"xml parser failed,root element is not server");
-		printf("xml parser failed,root element is not server\n");
 		exit(-1);
 	}
 	cur=root->xmlChildrenNode;
@@ -59,7 +57,7 @@ char *read_conf(char *key){
 		if(xmlStrcmp(cur->name,BAD_CAST(key))==0){
 			if(!(content=(xmlChar *)malloc(128*sizeof(char))))//free when exit
 				log_debug(LOG_LEVEL_DEBUG,"xml content malloc error!");
-				printf("xml content malloc error!\n");
+				
 			strcpy(content,xmlNodeGetContent(cur));
 			xmlFreeDoc(doc);
 			return (char *)content;

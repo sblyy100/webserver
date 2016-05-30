@@ -1,6 +1,7 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 #define MAX_CON 4096
+#include "base.h"
 #include <pthread.h>
 #include <stdlib.h>
 #if 0
@@ -25,6 +26,6 @@ struct con_stack {
 //extern struct con_stack *connections;
 int stack_init(struct con_stack *S);
 int stack_fini(struct con_stack *S);
-int con_pop(struct con_stack *S);
+int con_pop(struct con_stack *S, UINT32 *fd);
 int con_push(struct con_stack *S,int fd);
 #endif

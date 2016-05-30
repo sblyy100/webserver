@@ -16,7 +16,7 @@ struct server_conf{
 	char *logdir;
 	int maxfds;
 }srv;
-void init_conf(struct server_conf *);
+UINT32 init_conf(struct server_conf *);
 void destory_conf(struct server_conf *);
 char *read_conf(char *key);
 void recv_cmd_loop();

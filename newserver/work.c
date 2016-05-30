@@ -35,6 +35,7 @@ void work_thread(struct server_conf *srv){
     int newfd;//pop the accept fd
     int nfds;//epoll wait return fd
     int i;
+    UINT32 uiRet;
     extern struct con_stack *connections;
     struct epoll_event ev,*events;
     //pthread_cleanup_push(&work_clean,NULL);
@@ -49,20 +50,12 @@ void work_thread(struct server_conf *srv){
         exit(-1);
     }
 	while(1){
-	#if 1
-        if(NULL==connections){
-            log_debug(LOG_LEVEL_DEBUG,"connctions not create!");
+	
+        //pop array
+		uiRet = con_pop(connections, &newfd);
+		if(uiRet != OK){
+			//log_debug(LOG_LEVEL_DEBUG,"connection pop err,continue");
             sleep(1);
-            continue;
-        }
-	#endif
-        if(connections->top<0){
-            sleep(1);
-            continue;
-        }
-		newfd=con_pop(connections);
-		if(newfd<0){
-			sprintf(logstr,"newfd error,%d",newfd);
 			continue;
 		}
 		set_nonblock(newfd);
@@ -88,10 +81,11 @@ int process_events(int epfd,struct epoll_event* events,struct server_conf *srv){
 	if(events->events&EPOLLHUP){
 		log_debug(LOG_LEVEL_DEBUG, "remove fd because EPOLLHUP , %d",events->data.fd);
 		close(events->data.fd);
-		epoll_ctl(epfd,EPOLL_CTL_DEL,events->data.fd,NULL);
+		
 		//goto end;
 	}
 	if(events->events&EPOLLIN){
+        epoll_ctl(epfd,EPOLL_CTL_DEL,events->data.fd,NULL);
 		request=(char *)calloc(REQ_MAX,sizeof(char));
 		if(!request){
 			log_debug(LOG_LEVEL_DEBUG,"request malloc failed");
@@ -113,10 +107,11 @@ int process_events(int epfd,struct epoll_event* events,struct server_conf *srv){
 		else{
 			log_debug(LOG_LEVEL_DEBUG,"remove fd because read read error or peer close, %d",events->data.fd);
 			close(events->data.fd);
-			epoll_ctl(epfd,EPOLL_CTL_DEL,events->data.fd,NULL);
+			
 			goto end;
 		}
 		end:
+            epoll_ctl(epfd,EPOLL_CTL_DEL,events->data.fd,NULL);
 			if(request){
 				free(request);
 				request=NULL;

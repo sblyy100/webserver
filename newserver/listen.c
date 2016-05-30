@@ -38,7 +38,7 @@ int listen_thread(struct server_conf *srv){
 		log_debug(LOG_LEVEL_DEBUG,"create sock failed");
 		exit(-1);
 	}
-	log_debug(LOG_LEVEL_DEBUG, "create sock sucessful");
+	log_debug(LOG_LEVEL_DEBUG, "%s", "create sock sucessful");
 	//listen_sock=sock;
 	if(bind(sock,(struct sockaddr*)&server,sizeof(server))<0){
 		log_debug(LOG_LEVEL_DEBUG,"bind sock error");

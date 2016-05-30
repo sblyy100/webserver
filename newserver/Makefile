@@ -7,4 +7,4 @@ server: $(objects)
 $(objects): %.o: %.c
 	$(CC) -c $(CFLAGS) $< -o $@ $(CFLAGS)
 clean:
-	rm *.o
+	rm *.o server

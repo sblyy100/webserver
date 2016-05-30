@@ -80,10 +80,11 @@ static void parse_arg(int argc,char **argv){
 	}
 }
 main(int argc,char **argv){
-	int tmp;
+	UINT32 tmp;
+    UINT32 uiRet;
 	char tmp_buf[128];
-	int child=0;
-	int child_num=WORK_PROCESS_NUM;
+	INT32 child=0;
+	UINT32 child_num=WORK_PROCESS_NUM;
 	pid_t pid;				//the pid of worker child process
 	pthread_t config_tid,watch_tid,work_tid,listen_tid,worker1,worker2;	
 	/*start main thread*/
@@ -93,16 +94,29 @@ main(int argc,char **argv){
 	parse_arg(argc,argv);
 	if(isdaemon)
 		mydaemon();
-	perror("init server start");
-	init_conf(&srv);
-	perror("init server ok");
-	dlog=init_log(&srv);
-	perror("init log ok");
+    
+	uiRet = init_log();
+    if (uiRet != OK)
+    {
+        perror("init  log err");
+        exit(-1);
+    }
+	uiRet = init_conf(&srv);
+    if (uiRet != OK)
+    {
+        log_debug(LOG_LEVEL_DEBUG,"init server config err");
+        exit(-1);
+    }
+	
+	
+	#if 0
 	if(pthread_create(&config_tid,NULL,recv_cmd_loop,NULL)<0){
 		log_debug(LOG_LEVEL_DEBUG,"create config thread error");
 		//exit(-1);
 	}
+    
 	log_debug(LOG_LEVEL_DEBUG,"create config thread sucessful");
+    #endif
 	/*main thread*/
 	/*parent process:watch*/
 	while(isdaemon&&(!child)){
@@ -132,8 +146,10 @@ main(int argc,char **argv){
 	pthread_create(&listen_tid,NULL,listen_thread,&srv);
 	pthread_create(&worker1,NULL,work_thread,&srv);
 	pthread_create(&worker2,NULL,work_thread,&srv);
-	pthread_join(listen_tid,NULL);
-	//pthread_join(work_tid,NULL);
+    //wait listen and worker
+    pthread_join(listen_tid,NULL);
+	pthread_join(worker1,NULL);
+    pthread_join(worker2,NULL);
 	//work_loop(&srv);
 	}
 }

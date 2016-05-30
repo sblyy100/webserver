@@ -14,12 +14,12 @@ free_response(response_t)
 http_response_send_error(int fd,int statuccode,char *status_desc,int content_length,char *error_content)
  */
 typedef str_t http_response_t;
-
+#if 0
 #define free(p) do {\
 	printf("%s:%d:%s:free(0x%lx)\n", __FILE__, __LINE__,__func__,(unsigned long)p);\
 	free(p);\
 	}while(0)
-#if 0
+
 #define malloc(p) malloc(p);\
 	printf("%s:%d:%s:malloc(%d)\n", __FILE__, __LINE__,__func__,(unsigned long)p)
 #endif

@@ -1,5 +1,6 @@
 #ifndef _LOG_H
 #define _LOG_H
+#include "base.h"
 #include <stdarg.h>
 #include <pthread.h>
 #include <stdio.h>
@@ -9,8 +10,14 @@
 #define LOG_2_STDERR 1
 typedef struct {
 	pthread_mutex_t log_lock;
-	FILE *log;
+	unsigned int OPCODE;
+    unsigned char filename[128];
 }log_t;
+enum tagOpCode
+{
+    LOG_TO_FILE,
+    LOG_TO_STDERR,
+};
 
 enum tagLogLevel
 {
@@ -22,11 +29,15 @@ enum tagLogLevel
 };
 
 
-#define log_debug(level, fmt,args...) mylog(level,fmt,##args)
+//#define log_debug(level,fmt,args...) mylog(level,fmt,##args)
+//#define log_debug(level,fmt,args...) mylog(level,fmt,args...)
 
-void mylog(unsigned int level, char *fmt,...);
-log_t* init_log(struct server_conf *);
-void fini_log(log_t *);
+
+
+void log_debug(unsigned int level, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
+
+UINT32 init_log();
+void fini_log();
 
 
 
