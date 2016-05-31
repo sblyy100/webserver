@@ -18,14 +18,16 @@ typedef struct connection_s{
 }connection_t;
 #endif
 /*between worker and listener*/
-struct con_stack {
+typedef struct tag_con_stack {
 	pthread_mutex_t stack_lock;
 	int top;
 	int con[MAX_CON];
-};
+}CON_STACK_t;
 //extern struct con_stack *connections;
-int stack_init(struct con_stack *S);
-int stack_fini(struct con_stack *S);
-int con_pop(struct con_stack *S, UINT32 *fd);
-int con_push(struct con_stack *S,int fd);
+int stack_init(CON_STACK_t *S);
+int stack_fini(CON_STACK_t *S);
+int con_pop(CON_STACK_t *S, UINT32 *fd);
+int con_pop_batch(CON_STACK_t *S, UINT32 *fd, UINT32 *n);
+
+int con_push(CON_STACK_t *S,int fd);
 #endif

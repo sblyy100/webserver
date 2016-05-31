@@ -5,7 +5,7 @@
 #include "network.h"
 #include <stdlib.h>
 //int listen_sock=0;
-struct con_stack *connections;
+CON_STACK_t g_connections;
 int listen_thread(struct server_conf *srv){
 	struct sockaddr_in server;
 	struct sockaddr_in client;
@@ -13,17 +13,10 @@ int listen_thread(struct server_conf *srv){
 	int client_len;
 	int newsock=-1;
 	int sock;
-	char logstr[1024];
 	server.sin_family=AF_INET;    ///init server addr
-	//struct con_stack *connections;
+
 	log_debug(LOG_LEVEL_DEBUG, "listen thread create %u",pthread_self());
-	connections=(struct con_stack*)malloc(sizeof(struct con_stack));
-	if(!connections){
-		log_debug(LOG_LEVEL_DEBUG,"malloc for connection stack error");
-		exit(-1);
-	}
-	log_debug(LOG_LEVEL_DEBUG, "malloc for connection stack OK");
-	stack_init(connections);
+	
 	if(!srv->ip)
     		server.sin_addr.s_addr=htonl(INADDR_ANY);
 	else
@@ -51,12 +44,12 @@ int listen_thread(struct server_conf *srv){
 	}
 	else{
 		listen(sock,srv->maxfds);
-		log_debug(LOG_LEVEL_DEBUG, "listen sucessful");
+		log_debug(LOG_LEVEL_DEBUG, "listen sucessful,backlog:%u", srv->maxfds);
 	}
 	while(1){
-		if((int)(connections->top)>128){
+		if(g_connections.top>128){
 			//printf("top is %d\n",connections->top);
-			log_debug(LOG_LEVEL_DEBUG, "listen stack > 128,sleep 1s");
+			log_debug(LOG_LEVEL_DEBUG, "listen stack %u,sleep 1s", g_connections.top);
 			sleep(1);
 			continue;
 		}
@@ -66,7 +59,7 @@ int listen_thread(struct server_conf *srv){
 		}
 		log_debug(LOG_LEVEL_DEBUG,"accept OK,accept sock %d",newsock);
 		
-		con_push(connections,newsock);
+		con_push(&g_connections,newsock);
 
 	}
 }

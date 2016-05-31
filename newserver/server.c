@@ -4,6 +4,7 @@
 #include "listen.h"
 #include "watch.h"
 #include "work.h"
+#include "network.h"
 #include "config.h"
 #include <stdlib.h>
 #include <unistd.h>
@@ -23,9 +24,16 @@ extern int errno;
 extern int log_to;
 extern log_t *dlog;
 
-int isdaemon = 0;
+pthread_t gui_listen_tid = 0;
+pthread_t gui_config_tid = 0;
+pthread_t gui_worker_tid[WORK_THREAD_NUM] = {0};
+
+int isdaemon = 1;
+extern CON_STACK_t g_connections;
+
 static void sigint_handler(int sig){
-	fini_log(dlog);
+    log_debug(LOG_LEVEL_DEBUG,"shutdown");
+	fini_log();
 	shut_down();
 	//warn_log("shut down!!");
 }
@@ -86,11 +94,13 @@ main(int argc,char **argv){
 	INT32 child=0;
 	UINT32 child_num=WORK_PROCESS_NUM;
 	pid_t pid;				//the pid of worker child process
-	pthread_t config_tid,watch_tid,work_tid,listen_tid,worker1,worker2;	
+	
 	/*start main thread*/
 	//extern struct server_conf  srv;
 	/*sig init*/
 	signal(SIGINT,sigint_handler);
+    signal(SIGTERM,sigint_handler);
+    signal(SIGHUP,sigint_handler);
 	parse_arg(argc,argv);
 	if(isdaemon)
 		mydaemon();
@@ -141,15 +151,17 @@ main(int argc,char **argv){
 			child_num++;
 		}
 	}
-	if((!isdaemon)||(child&&isdaemon)){
-	//listen_thread(&srv);
-	pthread_create(&listen_tid,NULL,listen_thread,&srv);
-	pthread_create(&worker1,NULL,work_thread,&srv);
-	pthread_create(&worker2,NULL,work_thread,&srv);
-    //wait listen and worker
-    pthread_join(listen_tid,NULL);
-	pthread_join(worker1,NULL);
-    pthread_join(worker2,NULL);
-	//work_loop(&srv);
+	if((!isdaemon)||(child&&isdaemon))
+    {   
+        stack_init(&g_connections);
+        
+        pthread_create(&gui_listen_tid,NULL,listen_thread,&srv);
+        pthread_create(&gui_worker_tid[0],NULL,work_thread,&srv);
+        pthread_create(&gui_worker_tid[1],NULL,work_thread,&srv);
+        //wait listen and worker
+        pthread_join(gui_listen_tid,NULL);
+        pthread_join(gui_worker_tid[0],NULL);
+        pthread_join(gui_worker_tid[1],NULL);
+        //work_loop(&srv);
 	}
 }

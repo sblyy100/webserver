@@ -15,6 +15,8 @@
 #include "http.h"
 //#include <arpa/inet.h>
 #define REQ_MAX 1024
+extern CON_STACK_t g_connections;
+
 static int set_nonblock(int fd){
     int flag;
     flag=fcntl(fd,F_GETFL);
@@ -32,11 +34,11 @@ void work_clean(){
 void work_thread(struct server_conf *srv){
     char logstr[1024];
     int epfd;//epoll fd
-    int newfd;//pop the accept fd
+    int newfd[128];//pop the accept fd
     int nfds;//epoll wait return fd
-    int i;
+    int i, j,n=128;
     UINT32 uiRet;
-    extern struct con_stack *connections;
+    
     struct epoll_event ev,*events;
     //pthread_cleanup_push(&work_clean,NULL);
     events=(struct epoll_event*)malloc(MAX_CON*sizeof(struct epoll_event));
@@ -50,21 +52,26 @@ void work_thread(struct server_conf *srv){
         exit(-1);
     }
 	while(1){
-	
+	    n = 128;
         //pop array
-		uiRet = con_pop(connections, &newfd);
-		if(uiRet != OK){
+		uiRet = con_pop_batch(&g_connections, newfd, &n);
+		if(uiRet != OK || n <=0){
 			//log_debug(LOG_LEVEL_DEBUG,"connection pop err,continue");
             sleep(1);
 			continue;
 		}
-		set_nonblock(newfd);
-		ev.data.fd=newfd;
-		ev.events=EPOLLIN|EPOLLET;
-		epoll_ctl(epfd,EPOLL_CTL_ADD,newfd,&ev);
+        for (i = 0; i < n; i++)
+        {
+            log_debug(LOG_LEVEL_DEBUG,"deal with %u", newfd[i]);
+            set_nonblock(newfd[i]);
+            ev.data.fd=newfd[i];
+    		ev.events=EPOLLIN|EPOLLET;
+    		epoll_ctl(epfd,EPOLL_CTL_ADD,newfd[i],&ev);
+        }
+		
 		if((nfds=epoll_wait(epfd,events,MAX_CON,1000))>0){
-			for(i=0;i<nfds;i++)
-				process_events(epfd,events+i,srv);
+			for(j=0;j<nfds;j++)
+				process_events(epfd,events+j,srv);
 		}
 
 	}
@@ -102,6 +109,7 @@ int process_events(int epfd,struct epoll_event* events,struct server_conf *srv){
 			log_debug(LOG_LEVEL_DEBUG,"receive  from fd %d",events->data.fd);
 			request_decode(events->data.fd,request,request_line);
 			http_response_create(srv,request_line,&response);
+            
 			goto end;
 		}
 		else{

@@ -2,10 +2,17 @@
 #include "log.h"
 #include <stdlib.h>
 #include <pthread.h>
-int stack_init(struct con_stack *S){
+int stack_init(CON_STACK_t *S){
 	int ret;
-	//S=(struct con_stack*)malloc(sizeof(struct con_stack));
-	//if()
+    
+    #if 0
+	stack=(struct con_stack*)malloc(sizeof(struct con_stack));
+	if(stack == NULL)
+    {
+        log_debug(LOG_LEVEL_DEBUG,"malloc for connection stack error");
+		exit(-1);
+    }   
+    #endif
 	ret=pthread_mutex_init(&(S->stack_lock),NULL);
 	if(ret<0){
 		log_debug(LOG_LEVEL_DEBUG,"stack lock init err: %d %m", ret);
@@ -14,15 +21,16 @@ int stack_init(struct con_stack *S){
 	S->top=-1;
 	
 	memset(S->con,MAX_CON,0);
-	return 1;
+    //*S = stack;
+	return OK;
 }
-int stack_fini(struct con_stack *S){
+int stack_fini(CON_STACK_t *S){
 	pthread_mutex_destroy(&S->stack_lock);
-	free(S);
-	S=NULL;
+	//free(S);
+	//S=NULL;
 	return 1;
 }
-int con_pop(struct con_stack *S, UINT32 *fd){
+int con_pop(CON_STACK_t *S, UINT32 *fd){
 
     if(NULL==S){
         //log_debug(LOG_LEVEL_DEBUG,"connctions stack NULL!");
@@ -43,9 +51,43 @@ int con_pop(struct con_stack *S, UINT32 *fd){
 	log_debug(LOG_LEVEL_DEBUG,"pop a socket %d", *fd);
 	pthread_mutex_unlock(&(S->stack_lock));
     return OK;
-
 }
-int con_push(struct con_stack *S,int fd){
+int con_pop_batch(CON_STACK_t *S, UINT32 *fd, UINT32 *n){
+    UINT32 i;
+    
+    if (n == NULL || *n == 0)
+    {
+        return ERR;
+    }
+    if(NULL==S){
+        return ERR;
+    }
+    if(S->top<0){
+        return ERR;
+    }
+        
+	if (pthread_mutex_trylock(&(S->stack_lock)) != 0)
+    {
+        return ERR;
+    }   
+	//pthread_mutex_lock(&(S->stack_lock));
+	for(i = 0; i < *n; i++)
+    {        
+        if (S->top < 0)
+        {
+            break;
+        }
+        fd[i] = S->con[S->top--];
+        log_debug(LOG_LEVEL_DEBUG,"pop  %u", fd[i]);
+    }
+    *n = i;
+    log_debug(LOG_LEVEL_DEBUG,"pop batch socket %u", *n);
+    
+	pthread_mutex_unlock(&(S->stack_lock));
+    return OK;
+}
+
+int con_push(CON_STACK_t *S,int fd){
 	char logstr[1024];
 	if(S->top<MAX_CON){
 		pthread_mutex_lock(&(S->stack_lock));
