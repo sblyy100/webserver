@@ -15,17 +15,11 @@
 #include "http.h"
 //#include <arpa/inet.h>
 #define REQ_MAX 1024
-extern CON_STACK_t g_connections;
+extern CON_STACK_t *g_sock_stack;
+extern FD_SESSION_t *g_fd_session_table; 
 
-static int set_nonblock(int fd){
-    int flag;
-    flag=fcntl(fd,F_GETFL);
-    if(flag&O_NONBLOCK)
-        return 0;
-    else
-        fcntl(fd,F_SETFL,O_NONBLOCK);
-    return 0;
-}
+static __thread INT32 uiThread_epfd = 0;
+
 void shut_down(void){
     exit(1);
 }
@@ -39,22 +33,22 @@ void work_thread(struct server_conf *srv){
     int i, j,n=128;
     UINT32 uiRet;
     
-    struct epoll_event ev,*events;
+    struct epoll_event *events;
     //pthread_cleanup_push(&work_clean,NULL);
     events=(struct epoll_event*)malloc(MAX_CON*sizeof(struct epoll_event));
     if(!events){
         log_debug(LOG_LEVEL_DEBUG,"events malloc failed");
         exit(-1);
     }
-    epfd=epoll_create(256);
-    if(-1==epfd){
-        log_debug(LOG_LEVEL_DEBUG,"events malloc failed");
+    uiThread_epfd = epoll_create(256);
+    if(-1 == uiThread_epfd){
+        log_debug(LOG_LEVEL_ERR,"events malloc failed");
         exit(-1);
     }
 	while(1){
 	    n = 128;
         //pop array
-		uiRet = con_pop_batch(&g_connections, newfd, &n);
+		uiRet = con_pop_batch(g_sock_stack, newfd, &n);
 		if(uiRet != OK || n <=0){
 			//log_debug(LOG_LEVEL_DEBUG,"connection pop err,continue");
             sleep(1);
@@ -62,37 +56,33 @@ void work_thread(struct server_conf *srv){
 		}
         for (i = 0; i < n; i++)
         {
-            log_debug(LOG_LEVEL_DEBUG,"deal with %u", newfd[i]);
-            set_nonblock(newfd[i]);
-            ev.data.fd=newfd[i];
-    		ev.events=EPOLLIN|EPOLLET;
-    		epoll_ctl(epfd,EPOLL_CTL_ADD,newfd[i],&ev);
+            fd_session_init(newfd[i]);
+            
         }
 		
-		if((nfds=epoll_wait(epfd,events,MAX_CON,1000))>0){
+		if((nfds=epoll_wait(uiThread_epfd,events,MAX_CON,1000))>0){
 			for(j=0;j<nfds;j++)
-				process_events(epfd,events+j,srv);
+				process_events(events+j,srv);
 		}
 
 	}
-	close(epfd);
+	close(uiThread_epfd);
 	//pthread_cleanup_pop(1);
 }
 //init_clientfd(fd)
-int process_events(int epfd,struct epoll_event* events,struct server_conf *srv){
+int process_events(struct epoll_event* ev,struct server_conf *srv){
 	char *request;
 	http_request_line_t *request_line;
 	http_response_t response;
 	response.len=0;
 	response.data=NULL;
-	if(events->events&EPOLLHUP){
-		log_debug(LOG_LEVEL_DEBUG, "remove fd because EPOLLHUP , %d",events->data.fd);
-		close(events->data.fd);
-		
-		//goto end;
+	if(ev->events&EPOLLHUP){
+		log_debug(LOG_LEVEL_DEBUG, "remove fd because EPOLLHUP , %d",ev->data.fd);
+        fd_session_delete(ev->data.fd);
+        close(ev->data.fd);
+		return OK;
 	}
-	if(events->events&EPOLLIN){
-        epoll_ctl(epfd,EPOLL_CTL_DEL,events->data.fd,NULL);
+	if(ev->events&EPOLLIN){
 		request=(char *)calloc(REQ_MAX,sizeof(char));
 		if(!request){
 			log_debug(LOG_LEVEL_DEBUG,"request malloc failed");
@@ -105,21 +95,22 @@ int process_events(int epfd,struct epoll_event* events,struct server_conf *srv){
 			goto end;
 		}
 		log_debug(LOG_LEVEL_DEBUG,"malloc for request line buffer ok");
-		if(recv(events->data.fd,request,REQ_MAX,0)>0){
-			log_debug(LOG_LEVEL_DEBUG,"receive  from fd %d",events->data.fd);
-			request_decode(events->data.fd,request,request_line);
+		if(recv(ev->data.fd,request,REQ_MAX,0)>0){
+			log_debug(LOG_LEVEL_DEBUG,"receive  from fd %d",ev->data.fd);
+			request_decode(ev->data.fd,request,request_line);
 			http_response_create(srv,request_line,&response);
             
 			goto end;
 		}
 		else{
-			log_debug(LOG_LEVEL_DEBUG,"remove fd because read read error or peer close, %d",events->data.fd);
-			close(events->data.fd);
+			log_debug(LOG_LEVEL_DEBUG,"remove fd because read read error or peer close, %d",ev->data.fd);
+			close(ev->data.fd);
 			
 			goto end;
 		}
 		end:
-            epoll_ctl(epfd,EPOLL_CTL_DEL,events->data.fd,NULL);
+            fd_session_delete(ev->data.fd);
+            close(ev->data.fd);// ±ÜÃâclose wait
 			if(request){
 				free(request);
 				request=NULL;
@@ -131,3 +122,40 @@ int process_events(int epfd,struct epoll_event* events,struct server_conf *srv){
 			return 0;
 	}
 }
+static int set_nonblock(int fd){
+    int flag;
+    flag=fcntl(fd,F_GETFL);
+    if(flag&O_NONBLOCK)
+        return 0;
+    else
+        fcntl(fd,F_SETFL,O_NONBLOCK);
+    return 0;
+}
+
+int fd_session_init(int fd)
+{
+    struct epoll_event ev;
+    FD_SESSION_t *pstFd_session;
+    pstFd_session = g_fd_session_table + fd;
+    pstFd_session->epfd = uiThread_epfd;
+    //pstFd_session->event_set
+    log_debug(LOG_LEVEL_DEBUG,"fd_session_init %u", fd);
+    set_nonblock(fd);
+    socket_opt_set(fd, OPT_TCP_CORK, 1);
+    ev.data.fd=fd;
+    ev.events=EPOLLIN|EPOLLET;
+    epoll_ctl(uiThread_epfd,EPOLL_CTL_ADD,fd,&ev);
+    return OK;
+}
+int fd_session_delete(int fd)
+{
+    struct epoll_event ev;
+    FD_SESSION_t *pstFd_session;
+    pstFd_session = g_fd_session_table + fd;
+    
+    memset(pstFd_session,0,sizeof(FD_SESSION_t));
+    log_debug(LOG_LEVEL_DEBUG,"fd_session_delete %u", fd);
+    epoll_ctl(uiThread_epfd,EPOLL_CTL_DEL,fd,NULL);
+    return OK;
+}
+

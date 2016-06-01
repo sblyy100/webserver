@@ -4,19 +4,47 @@
 #include "base.h"
 #include <pthread.h>
 #include <stdlib.h>
-#if 0
+
 typedef struct connection_s{
-	uint32_t epfd;
-	uint32_t client_fd;
-	uint32_t c_or_s;
-	uint32_t clientip;
-	uint32_t serverip
-	uint16_t clientport;
-	uint16_t serverport;
-	//uint32_t timeout;
-	//uint32_t unset;
-}connection_t;
-#endif
+    UINT32 epfd;
+    UINT32 fd;
+    UINT16 fd_status:8;
+    UINT16 event_status:4;
+    UINT16 event_set:4;
+    UINT16 resv;
+}FD_SESSION_t;
+
+/*FD ״̬*/
+enum {
+    SESSION_FD_CLOSED     = 0,      
+    SESSION_FD_CONNECTING = (1<<0),
+    SESSION_FD_CONNECTED  = (1<<1),
+    SESSION_FD_IOBUSY     = (1<<2),
+    SESSION_FD_HUPERR     = (1<<3),
+    SESSION_FD_CLOSING    = (1<<4),
+    SESSION_FD_SSL_HANDSHAKING = (1 << 5)
+};
+/*epoll ״̬*/
+enum {
+    SESSION_IO_IDLE   = 0,      
+    SESSION_IO_READ =  1<<0,
+    SESSION_IO_WRITE = (1<<1),
+    SESSION_IO_CLOSE = (1u<<2), 
+};
+/*TCP OPTION*/
+enum
+{
+    OPT_TCPRST = (1<<0),
+    OPT_KEEPALIVE = (1<<1),
+    OPT_REUSEADDR = (1<<2),
+    OPT_SNDBUF = (1<<3),
+    OPT_RCVBUF = (1<<4),
+    OPT_IP_TPROXY = (1<<5),
+    OPT_TCP_NODELAY = (1<<6),
+    OPT_TCP_CORK = (1<<7),
+    OPT_TCP_DEFER_ACCEPT = (1<<8),
+    OPT_TCP_SYNCNT = (1<<9),
+};
 /*between worker and listener*/
 typedef struct tag_con_stack {
 	pthread_mutex_t stack_lock;
@@ -30,4 +58,8 @@ int con_pop(CON_STACK_t *S, UINT32 *fd);
 int con_pop_batch(CON_STACK_t *S, UINT32 *fd, UINT32 *n);
 
 int con_push(CON_STACK_t *S,int fd);
+int socket_opt_set(int fd, int optname, int optval);
+
+
+
 #endif

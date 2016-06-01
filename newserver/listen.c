@@ -5,7 +5,7 @@
 #include "network.h"
 #include <stdlib.h>
 //int listen_sock=0;
-CON_STACK_t g_connections;
+extern CON_STACK_t *g_sock_stack;
 int listen_thread(struct server_conf *srv){
 	struct sockaddr_in server;
 	struct sockaddr_in client;
@@ -47,9 +47,9 @@ int listen_thread(struct server_conf *srv){
 		log_debug(LOG_LEVEL_DEBUG, "listen sucessful,backlog:%u", srv->maxfds);
 	}
 	while(1){
-		if(g_connections.top>128){
+		if(g_sock_stack->top>128){
 			//printf("top is %d\n",connections->top);
-			log_debug(LOG_LEVEL_DEBUG, "listen stack %u,sleep 1s", g_connections.top);
+			log_debug(LOG_LEVEL_DEBUG, "listen stack %u,sleep 1s", g_sock_stack->top);
 			sleep(1);
 			continue;
 		}
@@ -59,7 +59,7 @@ int listen_thread(struct server_conf *srv){
 		}
 		log_debug(LOG_LEVEL_DEBUG,"accept OK,accept sock %d",newsock);
 		
-		con_push(&g_connections,newsock);
+		con_push(g_sock_stack,newsock);
 
 	}
 }

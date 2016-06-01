@@ -2,6 +2,14 @@
 #include "log.h"
 #include <stdlib.h>
 #include <pthread.h>
+#include <sys/ioctl.h>
+#include <netinet/tcp.h>
+#include <fcntl.h>
+#include <netdb.h>
+
+
+FD_SESSION_t *g_fd_session_table = NULL; 
+CON_STACK_t *g_sock_stack = NULL;
 int stack_init(CON_STACK_t *S){
 	int ret;
     
@@ -97,4 +105,23 @@ int con_push(CON_STACK_t *S,int fd){
 		return 1;
 	}
 	return -1;
+}
+
+int socket_opt_set(int fd, int optname, int optval)
+{
+    int enable;
+    enable = optval ? 1:0;
+    switch(optname)
+    {
+        case OPT_TCP_CORK:
+            if (setsockopt(fd, IPPROTO_TCP, TCP_CORK, (char *) &enable, sizeof(enable)) < 0) 
+            {
+                log_debug(LOG_LEVEL_DEBUG,"set opt TCP_CORK failed,%d",fd);
+                return ERR;
+            }
+            break;
+        default:
+            break;
+    }
+    return OK;
 }

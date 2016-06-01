@@ -29,7 +29,8 @@ pthread_t gui_config_tid = 0;
 pthread_t gui_worker_tid[WORK_THREAD_NUM] = {0};
 
 int isdaemon = 1;
-extern CON_STACK_t g_connections;
+extern CON_STACK_t *g_sock_stack;
+extern FD_SESSION_t *g_fd_session_table; 
 
 static void sigint_handler(int sig){
     log_debug(LOG_LEVEL_DEBUG,"shutdown");
@@ -104,29 +105,8 @@ main(int argc,char **argv){
 	parse_arg(argc,argv);
 	if(isdaemon)
 		mydaemon();
-    
-	uiRet = init_log();
-    if (uiRet != OK)
-    {
-        perror("init  log err");
-        exit(-1);
-    }
-	uiRet = init_conf(&srv);
-    if (uiRet != OK)
-    {
-        log_debug(LOG_LEVEL_DEBUG,"init server config err");
-        exit(-1);
-    }
 	
 	
-	#if 0
-	if(pthread_create(&config_tid,NULL,recv_cmd_loop,NULL)<0){
-		log_debug(LOG_LEVEL_DEBUG,"create config thread error");
-		//exit(-1);
-	}
-    
-	log_debug(LOG_LEVEL_DEBUG,"create config thread sucessful");
-    #endif
 	/*main thread*/
 	/*parent process:watch*/
 	while(isdaemon&&(!child)){
@@ -152,8 +132,40 @@ main(int argc,char **argv){
 		}
 	}
 	if((!isdaemon)||(child&&isdaemon))
-    {   
-        stack_init(&g_connections);
+    {
+        uiRet = init_log();
+        if (uiRet != OK)
+        {
+            perror("init  log err");
+            exit(-1);
+        }
+    	uiRet = init_conf(&srv);
+        if (uiRet != OK)
+        {
+            log_debug(LOG_LEVEL_DEBUG,"init server config err");
+            exit(-1);
+        }
+        g_sock_stack = (CON_STACK_t *)malloc(sizeof(CON_STACK_t));
+        if (g_sock_stack == NULL)
+        {
+            log_debug(LOG_LEVEL_ERR,"g_sock_stack NULL");
+            exit(-1);
+        }
+        stack_init(g_sock_stack);
+        g_fd_session_table = (FD_SESSION_t *)calloc((size_t)0xffff, sizeof(FD_SESSION_t)); 
+        if (g_fd_session_table == NULL)
+        {
+            log_debug(LOG_LEVEL_ERR,"g_fd_session_table NULL");
+            exit(-1);
+        }
+        #if 0
+    	if(pthread_create(&config_tid,NULL,recv_cmd_loop,NULL)<0){
+    		log_debug(LOG_LEVEL_DEBUG,"create config thread error");
+    		//exit(-1);
+    	}
+        
+    	log_debug(LOG_LEVEL_DEBUG,"create config thread sucessful");
+        #endif
         
         pthread_create(&gui_listen_tid,NULL,listen_thread,&srv);
         pthread_create(&gui_worker_tid[0],NULL,work_thread,&srv);
