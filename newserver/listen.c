@@ -6,9 +6,12 @@
 #include <stdlib.h>
 //int listen_sock=0;
 extern CON_STACK_t *g_sock_stack;
-int listen_thread(struct server_conf *srv){
+extern SERVER_CONF_T srv;
+
+int listen_thread(){
 	struct sockaddr_in server;
 	struct sockaddr_in client;
+    SERVER_CONF_T *s = &srv;
 	//struct con_stack *connections=NULL;
 	int client_len;
 	int newsock=-1;
@@ -17,14 +20,14 @@ int listen_thread(struct server_conf *srv){
 
 	log_debug(LOG_LEVEL_DEBUG, "listen thread create %u",pthread_self());
 	
-	if(!srv->ip)
+	if(!s->ip)
     		server.sin_addr.s_addr=htonl(INADDR_ANY);
 	else
-		inet_pton(AF_INET,srv->ip,&server.sin_addr.s_addr);
-   	if(!srv->port)
+		inet_pton(AF_INET,s->ip,&server.sin_addr.s_addr);
+   	if(!s->port)
 		server.sin_port=htons(80);
 	else
-		server.sin_port=htons(srv->port);
+		server.sin_port=htons(s->port);
    	memset(server.sin_zero,0,8);
 
 	if((sock=socket(AF_INET,SOCK_STREAM,0))<0){
@@ -38,13 +41,13 @@ int listen_thread(struct server_conf *srv){
 		exit(-1);
 	}
 	log_debug(LOG_LEVEL_DEBUG,"bind sock sucessful");
-	if(!srv->maxfds){
+	if(!s->maxfds){
 		listen(sock,10);
 		
 	}
 	else{
-		listen(sock,srv->maxfds);
-		log_debug(LOG_LEVEL_DEBUG, "listen sucessful,backlog:%u", srv->maxfds);
+		listen(sock,s->maxfds);
+		log_debug(LOG_LEVEL_DEBUG, "listen sucessful,backlog:%u", s->maxfds);
 	}
 	while(1){
 		if(g_sock_stack->top>128){

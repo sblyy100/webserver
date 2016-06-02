@@ -8,10 +8,11 @@
 typedef struct connection_s{
     UINT32 epfd;
     UINT32 fd;
-    UINT16 fd_status:8;
-    UINT16 event_status:4;
-    UINT16 event_set:4;
-    UINT16 resv;
+    UINT32 fd_status:8;
+    UINT32 event_status:4;
+    UINT32 event_set:4;
+    UINT32 in_queue:1; //是否已经在epoll队列中
+    UINT32 resv;
 }FD_SESSION_t;
 
 /*FD 状态*/

@@ -68,14 +68,17 @@ int con_pop_batch(CON_STACK_t *S, UINT32 *fd, UINT32 *n){
         return ERR;
     }
     if(NULL==S){
+        *n = 0;
         return ERR;
     }
     if(S->top<0){
+        *n = 0;
         return ERR;
     }
         
 	if (pthread_mutex_trylock(&(S->stack_lock)) != 0)
     {
+        *n = 0;
         return ERR;
     }   
 	//pthread_mutex_lock(&(S->stack_lock));

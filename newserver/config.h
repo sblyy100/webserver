@@ -9,13 +9,13 @@ typedef struct{
 	char *value;
 	struct config *next;
 }config;
-struct server_conf{
+typedef struct server_conf{
 	char *ip;
 	short port;
 	char *docroot;
 	char *logdir;
 	int maxfds;
-}srv;
+}SERVER_CONF_T;
 UINT32 init_conf(struct server_conf *);
 void destory_conf(struct server_conf *);
 char *read_conf(char *key);

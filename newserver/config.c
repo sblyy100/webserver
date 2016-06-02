@@ -5,6 +5,8 @@
 #include "config.h"
 #include "log.h"
 #include "unix_sock.h"
+SERVER_CONF_T srv = {0};
+
 UINT32 init_conf(struct server_conf *server){
 	//init_conf(&server)
 	char *tmp;

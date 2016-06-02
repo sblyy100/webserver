@@ -20,7 +20,6 @@
 #define WORK_PROCESS_NUM 1
 #define WORK_THREAD_NUM 2
 #define MODE (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)
-extern int errno;
 extern int log_to;
 extern log_t *dlog;
 
@@ -31,6 +30,7 @@ pthread_t gui_worker_tid[WORK_THREAD_NUM] = {0};
 int isdaemon = 1;
 extern CON_STACK_t *g_sock_stack;
 extern FD_SESSION_t *g_fd_session_table; 
+extern SERVER_CONF_T srv;
 
 static void sigint_handler(int sig){
     log_debug(LOG_LEVEL_DEBUG,"shutdown");
@@ -167,9 +167,9 @@ main(int argc,char **argv){
     	log_debug(LOG_LEVEL_DEBUG,"create config thread sucessful");
         #endif
         
-        pthread_create(&gui_listen_tid,NULL,listen_thread,&srv);
-        pthread_create(&gui_worker_tid[0],NULL,work_thread,&srv);
-        pthread_create(&gui_worker_tid[1],NULL,work_thread,&srv);
+        pthread_create(&gui_listen_tid,NULL,listen_thread,NULL);
+        pthread_create(&gui_worker_tid[0],NULL,work_thread,NULL);
+        pthread_create(&gui_worker_tid[1],NULL,work_thread,NULL);
         //wait listen and worker
         pthread_join(gui_listen_tid,NULL);
         pthread_join(gui_worker_tid[0],NULL);
